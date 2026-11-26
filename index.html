@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Alarm Maxdis Josep</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0 auto;font-family:system-ui,sans-serif;background:#f4f6fb;color:#1c2333;padding:12px;max-width:560px}
+header{background:linear-gradient(135deg,#d7192d,#1d3f94);color:#fff;border-radius:18px;padding:18px;margin-bottom:12px;text-align:center}
+h1{font-size:23px;margin:0}
+header p{margin:4px 0 0;font-size:13px;opacity:.85}
+.card{background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;border-left:6px solid #cfd6e4;box-shadow:0 2px 10px #1c23330f}
+.row{display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+button{border:0;border-radius:10px;padding:10px 14px;font-size:14px;font-weight:600;background:#e9edf5;color:#1c2333}
+button.utama{background:#d7192d;color:#fff}
+button.aktif{background:#1d3f94;color:#fff}
+button:disabled{opacity:.4}
+input,select{font-size:16px;padding:8px;border:1px solid #cfd6e4;border-radius:10px;background:#fff;color:#1c2333}
+input{width:90px}
+.waktu{font-size:32px;font-weight:800;font-variant-numeric:tabular-nums}
+.info{font-size:13px;color:#5b6478}
+.jalan{border-color:#f2a900}
+.siap{border-color:#12934a;background:#dcf7e6;animation:kedip .8s infinite alternate}
+.selesai{border-color:#12934a;opacity:.65}
+@keyframes kedip{to{background:#8ee6ae}}
+.bar{height:8px;background:#e9edf5;border-radius:4px;margin:8px 0;overflow:hidden}
+.bar div{height:100%;width:0;background:linear-gradient(90deg,#f2a900,#12934a)}
+</style>
+</head>
+<body>
+<header><h1>⏰ Alarm Maxdis Josep</h1><p>Pengingat save maxdisplay · 6 lorong</p></header>
+
+<div class="card">
+  <div class="row">
+    <button id="mLorong">Per Lorong</button>
+    <button id="mTotal">Total Semua Lorong</button>
+    <label class="info">Pembagi <input id="bagi" type="number" min="1" value="12" inputmode="numeric" style="width:64px"></label>
+  </div>
+  <p class="info" id="ket"></p>
+  <div class="row">
+    <label class="info">Suara <select id="suara">
+      <option value="beep">Beep Cepat</option>
+      <option value="bel">Bel Toko</option>
+      <option value="sirine">Sirine</option>
+    </select></label>
+    <button id="tes">🔊 Tes Suara</button>
+    <button id="reset">Reset Waktu</button>
+  </div>
+</div>
+
+<div class="card" id="panelTotal">
+  <div class="info" id="infoTotal"></div>
+  <div class="row"><span class="waktu" id="waktuTotal">00:00</span><button class="utama" id="mulaiTotal">Mulai Semua</button></div>
+</div>
+
+<div id="daftar"></div>
+
+<script>
+const N = 6, KUNCI = 'alarmMaxdisplay';
+let s = { suara:'beep', mode:'lorong', bagi:12, plu:Array(N).fill(''), mulai:Array(N).fill(null), mulaiTotal:null, saved:Array(N).fill(false) };
+try { Object.assign(s, JSON.parse(localStorage.getItem(KUNCI)) || {}); } catch(e) {}
+const simpan = () => { try { localStorage.setItem(KUNCI, JSON.stringify(s)); } catch(e) {} };
+const $ = id => document.getElementById(id);
+
+const jumlah = i => Math.max(0, parseInt(s.plu[i]) || 0);
+const detik = plu => Math.ceil(plu * 60 / s.bagi);
+const kumulatif = i => { let t = 0; for (let k = 0; k <= i; k++) t += jumlah(k); return t; };
+const format = d => String(Math.floor(d/60)).padStart(2,'0') + ':' + String(d%60).padStart(2,'0');
+const berjalan = () => s.mulaiTotal !== null || s.mulai.some(x => x !== null);
+
+let audio;
+function aktifkanSuara(){
+  try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); audio.resume(); } catch(e) {}
+}
+function bunyi(){
+  if (navigator.vibrate) navigator.vibrate([300,100,300]);
+  if (!audio) return;
+  // tiap nada: [frekuensi awal, frekuensi akhir, jeda, durasi]
+  const nada = SUARA[s.suara] || SUARA.beep;
+  nada.list.forEach(([f1, f2, jeda, lama]) => {
+    const o = audio.createOscillator(), g = audio.createGain(), t = audio.currentTime + jeda;
+    o.type = nada.jenis;
+    o.frequency.setValueAtTime(f1, t); o.frequency.linearRampToValueAtTime(f2, t + lama);
+    g.gain.setValueAtTime(.3, t); g.gain.exponentialRampToValueAtTime(.01, t + lama);
+    o.connect(g); g.connect(audio.destination); o.start(t); o.stop(t + lama);
+  });
+}
+const SUARA = {
+  beep:   { jenis:'square',   list:[[950,950,0,.18],[950,950,.22,.18],[950,950,.44,.18]] },
+  bel:    { jenis:'sine',     list:[[784,784,0,.45],[622,622,.42,.55]] },
+  sirine: { jenis:'sawtooth', list:[[500,1300,0,.45],[1300,500,.45,.45]] }
+};
+async function layarNyala(){ try { await navigator.wakeLock.request('screen'); } catch(e) {} }
+
+for (let i = 0; i < N; i++) {
+  $('daftar').insertAdjacentHTML('beforeend', `
+  <div class="card" id="k${i}">
+    <div class="row"><b>Lorong ${i+1}</b><label class="info">Jumlah PLU <input id="p${i}" type="number" min="0" inputmode="numeric" placeholder="0"></label></div>
+    <div class="info" id="h${i}"></div>
+    <div class="row"><span class="waktu" id="w${i}"></span>
+      <span><button class="utama" id="m${i}">Mulai</button> <button id="s${i}">Sudah Save</button></span></div>
+    <div class="bar"><div id="b${i}"></div></div>
+    <b id="st${i}"></b>
+  </div>`);
+  $('p'+i).value = s.plu[i];
+  $('p'+i).oninput = e => { s.plu[i] = e.target.value; simpan(); tampil(); };
+  $('m'+i).onclick = () => { aktifkanSuara(); layarNyala(); s.mulai[i] = Date.now(); s.saved[i] = false; simpan(); tampil(); };
+  $('s'+i).onclick = () => { s.saved[i] = true; simpan(); tampil(); };
+}
+
+function tampil(){
+  const total = s.mode === 'total';
+  $('mLorong').className = total ? '' : 'aktif';
+  $('mTotal').className = total ? 'aktif' : '';
+  $('mLorong').disabled = $('mTotal').disabled = $('bagi').disabled = berjalan();
+  $('ket').textContent = total
+    ? 'Satu kali mulai. Waktu save tiap lorong = (PLU lorong 1 sampai lorong itu) ÷ ' + s.bagi + ' menit.'
+    : 'Mulai tiap lorong sendiri. Waktu save = PLU lorong ÷ ' + s.bagi + ' menit.';
+  $('panelTotal').style.display = total ? '' : 'none';
+  const semua = kumulatif(N-1);
+  $('infoTotal').textContent = `Total ${semua} PLU ÷ ${s.bagi} = ${format(detik(semua))} (menit:detik)`;
+  const lewat = s.mulaiTotal ? Math.floor((Date.now() - s.mulaiTotal)/1000) : 0;
+  $('waktuTotal').textContent = format(Math.max(0, detik(semua) - lewat));
+  $('mulaiTotal').disabled = !semua || s.mulaiTotal !== null;
+
+  let adaSiap = false;
+  for (let i = 0; i < N; i++) {
+    const plu = jumlah(i);
+    const target = detik(total ? kumulatif(i) : plu);
+    const awal = total ? s.mulaiTotal : s.mulai[i];
+    const jalan = awal !== null && plu > 0;
+    const sisa = jalan ? Math.max(0, target - Math.floor((Date.now() - awal)/1000)) : target;
+    const siap = jalan && sisa === 0 && !s.saved[i];
+    if (siap) adaSiap = true;
+    $('h'+i).textContent = `${plu} PLU ÷ ${s.bagi} = ${format(detik(plu))}` + (total ? ` · save pada menit ke ${format(target)}` : '');
+    $('w'+i).textContent = format(plu ? sisa : 0);
+    $('b'+i).style.width = jalan ? (100 * (target - sisa) / target) + '%' : '0';
+    $('k'+i).className = 'card' + (s.saved[i] ? ' selesai' : siap ? ' siap' : jalan ? ' jalan' : '');
+    $('st'+i).textContent = s.saved[i] ? '✅ Tersimpan' : siap ? '🔔 SUDAH WAKTUNYA, SAVE SEKARANG!' : jalan ? '⏳ Belum waktunya save' : '';
+    $('p'+i).disabled = total ? s.mulaiTotal !== null : s.mulai[i] !== null;
+    $('m'+i).style.display = total ? 'none' : '';
+    $('m'+i).disabled = !plu || s.mulai[i] !== null;
+    $('s'+i).disabled = !siap;
+  }
+  return adaSiap;
+}
+
+$('suara').value = s.suara;
+$('suara').onchange = e => { s.suara = e.target.value; simpan(); aktifkanSuara(); bunyi(); };
+$('bagi').value = s.bagi;
+$('bagi').onchange = e => { s.bagi = Math.max(1, parseInt(e.target.value) || 12); e.target.value = s.bagi; simpan(); tampil(); };
+$('mLorong').onclick = () => { s.mode = 'lorong'; s.saved.fill(false); simpan(); tampil(); };
+$('mTotal').onclick = () => { s.mode = 'total'; s.saved.fill(false); simpan(); tampil(); };
+$('mulaiTotal').onclick = () => { aktifkanSuara(); layarNyala(); s.mulaiTotal = Date.now(); s.saved.fill(false); simpan(); tampil(); };
+$('tes').onclick = () => { aktifkanSuara(); bunyi(); };
+$('reset').onclick = () => { s.mulai.fill(null); s.mulaiTotal = null; s.saved.fill(false); simpan(); tampil(); };
+document.addEventListener('pointerdown', aktifkanSuara);
+
+setInterval(() => { if (tampil()) bunyi(); }, 1000);
+tampil();
+</script>
+</body>
+</html>
