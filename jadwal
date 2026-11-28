@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jadwal Masuk Kerja</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif; margin: 0; padding: 20px; min-height: 100vh; color: #e2e8f0; background: radial-gradient(circle at 10% 0%, #312e81 0, transparent 45%), radial-gradient(circle at 100% 10%, #0e7490 0, transparent 35%), #0b1020; }
+  header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 16px; }
+  h1 { margin: 0; font-size: 26px; background: linear-gradient(90deg, #a5b4fc, #67e8f9); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  header p { margin: 4px 0 0; color: #94a3b8; font-size: 13px; }
+  .nav, .bar, .legend { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button, input[type=month] { font: inherit; font-size: 14px; color: #e2e8f0; background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; padding: 9px 14px; cursor: pointer; color-scheme: dark; }
+  button:hover { background: rgba(255,255,255,.15); }
+  button.utama { background: linear-gradient(90deg, #6366f1, #06b6d4); border: 0; color: #fff; font-weight: 600; }
+  .bar, .legend { margin-bottom: 14px; }
+  .legend span { font-size: 12px; padding: 6px 12px; border-radius: 999px; font-weight: 600; }
+  .pesan { min-height: 20px; font-size: 13px; color: #67e8f9; margin-bottom: 8px; }
+  .wrap { overflow-x: auto; background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 18px; box-shadow: 0 20px 50px rgba(0,0,0,.35); padding-bottom: 6px; }
+  table { border-collapse: separate; border-spacing: 3px; font-size: 12px; }
+  th, td { text-align: center; white-space: nowrap; }
+  th { color: #94a3b8; font-weight: 600; padding: 8px 2px; }
+  th b { display: block; font-size: 16px; color: #f1f5f9; }
+  th.minggu, th.minggu b { color: #fb7185; }
+  .nama { position: sticky; left: 0; z-index: 1; background: #151b33; text-align: left; border-radius: 10px; padding: 3px 8px; }
+  .orang { display: flex; align-items: center; gap: 6px; }
+  .avatar { width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #fff; background: linear-gradient(135deg, #6366f1, #06b6d4); flex: none; }
+  .orang input { width: 90px; border: 0; background: transparent; color: #f1f5f9; font: inherit; font-size: 13px; font-weight: 600; }
+  .hapus { border: 0; background: none; color: #64748b; padding: 4px; }
+  select { width: 42px; height: 34px; border: 0; border-radius: 9px; font: inherit; font-weight: 700; text-align: center; text-align-last: center; appearance: none; -webkit-appearance: none; cursor: pointer; background: rgba(255,255,255,.07); color: #64748b; }
+  option { background: #fff; color: #111827; }
+  .P7  { background: #fde047; color: #422006; }
+  .P11 { background: #fb923c; color: #431407; }
+  .S15 { background: #60a5fa; color: #082f49; }
+  .O   { background: #fb7185; color: #4c0519; }
+  .C   { background: #4ade80; color: #052e16; }
+  select.lebih { outline: 3px solid #ef4444; outline-offset: -1px; }
+  .total { font-weight: 700; min-width: 32px; background: rgba(255,255,255,.06); border-radius: 8px; }
+  tr.jumlah td { color: #67e8f9; font-weight: 700; padding: 8px 2px; }
+  tr.jumlah td.nama { padding-left: 10px; }
+  /* Warna seperti sistem shift */
+  body { background: #eef0f4; color: #111827; }
+  h1 { background: none; color: #111827; }
+  header p { color: #4b5563; }
+  button, input[type=month] { background: #fff; color: #111827; border-color: #cbd5e1; color-scheme: light; }
+  button:hover { background: #e5e7eb; }
+  button.utama, button.utama:hover { background: #b4323c; color: #fff; }
+  .pesan { color: #0b6b83; }
+  .wrap { background: #fff; border-color: #cbd5e1; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,.08); padding: 0; }
+  table { border-spacing: 1px; background: #d1d5db; }
+  th { background: #e4e6ec; color: #111827; }
+  th b { color: #111827; }
+  th.minggu { background: #fb3b49; }
+  th.sabtu { background: #0b6b83; }
+  th.minggu, th.minggu b, th.sabtu, th.sabtu b { color: #111827; }
+  td { background: #fff; }
+  .nama, .total, tr.jumlah td { background: #fff; border-radius: 0; }
+  .orang input { color: #111827; }
+  .avatar { background: #b4323c; }
+  tr.jumlah td { color: #0b6b83; }
+  select { width: 46px; height: 40px; border-radius: 0; display: block; background: #fff; }
+  .P7  { background: #0f938c; color: #06231f; }
+  .P11 { background: #facc15; color: #111827; }
+  .S15 { background: #1ee052; color: #052e12; }
+  .O   { background: #0a0d12; color: #fff; }
+  .C   { background: #a855f7; color: #fff; }
+  button.bahaya { color: #b91c1c; border-color: #fca5a5; }
+  #teksJudul { font: inherit; color: inherit; background: transparent; border: 0; border-bottom: 2px dashed #94a3b8; padding: 0; max-width: 100%; field-sizing: content; min-width: 4ch; }
+  #teksJudul:read-only { border-color: transparent; }
+  [hidden] { display: none !important; }
+  .masuk { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; align-items: center; font-size: 13px; }
+  .masuk input { font: inherit; padding: 8px 10px; border: 1px solid #cbd5e1; border-radius: 8px; width: 130px; }
+  select:disabled { opacity: 1; cursor: default; }
+  @media print {
+    .masuk { display: none; }
+    @page { size: landscape; margin: 6mm; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    body { background: #fff; color: #111; padding: 0; min-height: 0; }
+    h1 { color: #111; background: none; font-size: 16px; }
+    header p, .nav, .bar, .hapus, .pesan, .avatar { display: none; }
+    .wrap { overflow: visible; background: none; border: 0; box-shadow: none; }
+    table { width: 100%; font-size: 7px; border-spacing: 1px; }
+    .nama { position: static; background: none; padding: 1px; }
+    .orang input { width: 45px; color: #111; font-size: 7px; }
+    th b { color: #111; font-size: 8px; }
+    table { background: #d1d5db; }
+    select { width: 100%; height: 18px; font-size: 7px; border-radius: 3px; }
+    .total { min-width: 0; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1><input id="teksJudul" maxlength="60" aria-label="Judul jadwal" title="Klik untuk ubah judul"> <span id="judul"></span></h1>
+  </div>
+  <div class="nav">
+    <button id="mundur" aria-label="Bulan sebelumnya">‹</button>
+    <input type="month" id="bulan">
+    <button id="maju" aria-label="Bulan berikutnya">›</button>
+  </div>
+</header>
+
+<form class="masuk" id="formMasuk">
+  <strong>Login pembuat</strong>
+  <input id="user" placeholder="User" autocomplete="off" aria-label="User">
+  <input id="pass" type="password" placeholder="Pass" aria-label="Password">
+  <button class="utama" type="submit">Masuk</button>
+</form>
+<div class="masuk"><span id="mode">Mode lihat saja</span><button id="keluar" hidden>Keluar</button></div>
+
+<div class="bar" id="alat" hidden>
+  <button class="utama" id="otomatis">⚡ Isi Otomatis</button>
+  <button class="utama" id="lanjut">Buat Bulan Depan →</button>
+  <button id="simpanTombol">💾 Simpan</button>
+  <button id="unduh">Unduh data.json</button>
+  <button id="buka">Buka data.json</button>
+  <button id="buang">Ambil Versi Terbit</button>
+  <input type="file" id="berkas" accept=".json" hidden>
+  <button id="tambah">+ Nama</button>
+  <button id="cetak">Cetak / PDF</button>
+  <button class="bahaya" id="kosong">🗑 Kosongkan Bulan Ini</button>
+  <button class="bahaya" id="semua">Kosongkan Semua Data</button>
+</div>
+
+<div class="legend">
+  <span class="P7">P7 · Pagi 07.00</span>
+  <span class="P11">P11 · Pagi 11.00</span>
+  <span class="S15">S15 · Siang 15.00</span>
+  <span class="O">O · Off</span>
+  <span class="C">C · Cuti</span>
+</div>
+
+<div class="pesan" id="status"></div>
+<div class="pesan" id="pesan" role="status"></div>
+<div class="wrap"><table id="tabel"></table></div>
+
+<script>
+const SHIFT = ["P7", "P11", "S15", "O", "C"];
+const KERJA = ["P7", "P11", "S15"];
+const HARI = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
+const KUNCI = "jadwalGithub";
+
+let data = {
+  bulan: "2026-11",
+  nama: ["Andi", "Budi", "Citra", "Dewi", "Eka", "Fajar"].map((n, i) => ({ id: i + 1, nama: n })),
+  jadwal: {}
+};
+let edit = false;
+let terbit = null;     // isi data.json yang sedang tayang
+let dasar = "";        // versi terbit yang menjadi dasar draf
+const salin = x => JSON.parse(JSON.stringify(x));
+const kosong = salin(data);
+
+function rapikan(d) {
+  if (!d || !/^\d{4}-\d{2}$/.test(d.bulan) || !Array.isArray(d.nama) || !d.jadwal) throw new Error("format");
+  return {
+    bulan: d.bulan,
+    judul: String(d.judul ?? "Jadwal Kerja"),
+    nama: d.nama.map(o => ({ id: Number(o.id), nama: String(o.nama) })),
+    jadwal: Object.fromEntries(Object.entries(d.jadwal).filter(([k, v]) => /^\d+\|\d{4}-\d{2}-\d{1,2}$/.test(k) && ["P7", "P11", "S15", "O", "C"].includes(v)))
+  };
+}
+
+const $ = id => document.getElementById(id);
+function yakin(tombol) {
+  if (tombol.dataset.siap) return true;
+  const asli = tombol.textContent;
+  tombol.dataset.siap = "1";
+  tombol.textContent = "Klik lagi: yakin?";
+  setTimeout(() => { delete tombol.dataset.siap; tombol.textContent = asli; }, 3000);
+  return false;
+}
+function simpan() {
+  if (!edit) return;
+  let teks;
+  try {
+    localStorage.setItem(KUNCI, JSON.stringify({ data, dasar }));
+    teks = "✓ Draf tersimpan di browser ini (belum tayang), " + new Date().toLocaleTimeString("id-ID");
+  } catch (e) {
+    teks = "⚠ Browser ini tidak bisa menyimpan. Unduh data.json sekarang.";
+  }
+  $("status").textContent = teks;
+}
+function geser(bulan, n) {
+  const [t, b] = bulan.split("-").map(Number);
+  const d = new Date(t, b - 1 + n, 1);
+  return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0");
+}
+function jumlahHari(bulan) {
+  const [t, b] = bulan.split("-").map(Number);
+  return new Date(t, b, 0).getDate();
+}
+const kunci = (id, bulan, t) => id + "|" + bulan + "-" + t;
+const isi = (id, bulan) => Array.from({ length: jumlahHari(bulan) }, (_, i) => data.jadwal[kunci(id, bulan, i + 1)] || "");
+const adaIsi = bulan => data.nama.some(o => isi(o.id, bulan).some(v => v && v !== "C"));
+
+// Isi satu bulan dengan melanjutkan pola bulan sebelumnya
+function buatJadwal(bulan) {
+  data.nama.forEach((orang, i) => {
+    const riwayat = [...isi(orang.id, geser(bulan, -2)), ...isi(orang.id, geser(bulan, -1))];
+    const berikut = {};            // urutan pergantian shift setelah libur
+    let shift = "", hitung = 0, habisLibur = false;
+    riwayat.forEach(v => {
+      if (KERJA.includes(v)) {
+        if (habisLibur && shift) berikut[shift] = v;
+        shift = v; hitung++; habisLibur = false;
+      } else {
+        hitung = 0;
+        if (v) habisLibur = true;
+      }
+    });
+    // Belum ada riwayat: buat pola awal, hari off tiap orang dibuat berbeda
+    if (!shift) {
+      shift = KERJA[i % 3];
+      hitung = i % 6;
+      habisLibur = false;
+      KERJA.forEach((s, n) => berikut[s] = KERJA[(n + 1) % 3]);
+    }
+    for (let t = 1; t <= jumlahHari(bulan); t++) {
+      const k = kunci(orang.id, bulan, t);
+      if (data.jadwal[k] === "C") { hitung = 0; habisLibur = true; continue; }  // cuti dipertahankan
+      if (hitung >= 5) {
+        data.jadwal[k] = "O"; hitung = 0; habisLibur = true;
+      } else {
+        if (habisLibur) { shift = berikut[shift] || shift; habisLibur = false; }
+        data.jadwal[k] = shift; hitung++;
+      }
+    }
+  });
+  simpan();
+}
+
+function el(tag, teks, kelas) {
+  const x = document.createElement(tag);
+  if (teks !== undefined) x.textContent = teks;
+  if (kelas) x.className = kelas;
+  return x;
+}
+
+// Tandai hari kerja ke-6 dan seterusnya, termasuk sambungan dari bulan lalu
+function periksa() {
+  let pelanggaran = 0;
+  data.nama.forEach(orang => {
+    let n = 0;
+    isi(orang.id, geser(data.bulan, -1)).forEach(v => n = KERJA.includes(v) ? n + 1 : 0);
+    document.querySelectorAll('select[data-id="' + orang.id + '"]').forEach(s => {
+      n = KERJA.includes(s.value) ? n + 1 : 0;
+      s.classList.toggle("lebih", n > 5);
+      if (n > 5) pelanggaran++;
+    });
+  });
+  $("pesan").textContent = pelanggaran ? "⚠ Kotak bergaris merah sudah lebih dari 5 hari kerja berturut-turut." : "";
+}
+
+function tampilkan() {
+  const [tahun, bln] = data.bulan.split("-").map(Number);
+  const hari = jumlahHari(data.bulan);
+  const tabel = $("tabel");
+  tabel.innerHTML = "";
+  $("bulan").value = data.bulan;
+  if (document.activeElement !== $("teksJudul")) $("teksJudul").value = data.judul ?? "Jadwal Kerja";
+  $("judul").textContent = "· " + new Date(tahun, bln - 1, 1).toLocaleDateString("id-ID", { month: "long", year: "numeric" });
+
+  const kepala = tabel.insertRow();
+  kepala.appendChild(el("th", "Nama", "nama"));
+  for (let t = 1; t <= hari; t++) {
+    const h = new Date(tahun, bln - 1, t).getDay();
+    const th = el("th", HARI[h], h === 0 ? "minggu" : h === 6 ? "sabtu" : "");
+    th.appendChild(el("b", String(t)));
+    kepala.appendChild(th);
+  }
+  SHIFT.forEach(s => kepala.appendChild(el("th", s)));
+
+  const jumlahMasuk = () => {
+    for (let t = 1; t <= hari; t++) {
+      $("masuk" + t).textContent = data.nama.filter(o => KERJA.includes(data.jadwal[kunci(o.id, data.bulan, t)])).length;
+    }
+  };
+
+  data.nama.forEach(orang => {
+    const baris = tabel.insertRow();
+    const td0 = baris.insertCell();
+    td0.className = "nama";
+    const kotak = el("div", undefined, "orang");
+    const avatar = el("span", orang.nama.charAt(0).toUpperCase(), "avatar");
+    const input = el("input");
+    input.value = orang.nama;
+    input.oninput = () => { orang.nama = input.value; avatar.textContent = input.value.charAt(0).toUpperCase(); simpan(); };
+    const hapus = el("button", "✕", "hapus");
+    hapus.title = "Hapus nama";
+    hapus.onclick = () => {
+      if (!yakin(hapus)) return;
+      data.nama = data.nama.filter(n => n.id !== orang.id);
+      simpan(); tampilkan();
+    };
+    kotak.append(avatar, input, hapus);
+    td0.appendChild(kotak);
+
+    const total = {};
+    const hitung = () => {
+      const v = isi(orang.id, data.bulan);
+      SHIFT.forEach(s => total[s].textContent = v.filter(x => x === s).length);
+    };
+    for (let t = 1; t <= hari; t++) {
+      const k = kunci(orang.id, data.bulan, t);
+      const pilih = el("select");
+      ["", ...SHIFT].forEach(s => pilih.add(new Option(s || "-", s)));
+      pilih.value = data.jadwal[k] || "";
+      pilih.className = pilih.value;
+      pilih.dataset.id = orang.id;
+      pilih.setAttribute("aria-label", orang.nama + " tanggal " + t);
+      pilih.onchange = () => {
+        data.jadwal[k] = pilih.value;
+        pilih.className = pilih.value;
+        simpan(); hitung(); jumlahMasuk(); periksa();
+      };
+      baris.insertCell().appendChild(pilih);
+    }
+    SHIFT.forEach(s => { total[s] = baris.insertCell(); total[s].className = "total"; });
+    hitung();
+  });
+
+  const bawah = tabel.insertRow();
+  bawah.className = "jumlah";
+  bawah.appendChild(el("td", "Yang masuk", "nama"));
+  for (let t = 1; t <= hari; t++) bawah.insertCell().id = "masuk" + t;
+  jumlahMasuk();
+  periksa();
+  $("teksJudul").readOnly = !edit;
+  if (!edit) {
+    tabel.querySelectorAll("select").forEach(x => x.disabled = true);
+    tabel.querySelectorAll(".orang input").forEach(x => x.readOnly = true);
+    tabel.querySelectorAll(".hapus").forEach(x => x.remove());
+  }
+}
+
+function pindah(bulan) { data.bulan = bulan; simpan(); tampilkan(); }
+function aturMode() {
+  $("formMasuk").hidden = edit;
+  $("alat").hidden = !edit;
+  $("keluar").hidden = !edit;
+  $("status").hidden = !edit;
+  $("mode").textContent = edit ? "Mode edit (pembuat)" : "Mode lihat saja";
+}
+function beri(teks) { $("pesan").textContent = teks; }
+
+function isiBulan(bulan, tombol) {
+  if (adaIsi(bulan) && !yakin(tombol)) return;
+  const lanjutan = adaIsi(geser(bulan, -1));
+  buatJadwal(bulan);
+  pindah(bulan);
+  beri(lanjutan ? "✓ Jadwal dibuat, melanjutkan pola bulan sebelumnya." : "✓ Pola awal dibuat (bulan sebelumnya masih kosong).");
+}
+
+$("teksJudul").oninput = e => { data.judul = e.target.value; simpan(); };
+$("bulan").onchange = e => { if (e.target.value) pindah(e.target.value); };
+$("mundur").onclick = () => pindah(geser(data.bulan, -1));
+$("maju").onclick = () => pindah(geser(data.bulan, 1));
+$("otomatis").onclick = e => isiBulan(data.bulan, e.currentTarget);
+$("lanjut").onclick = e => {
+  if (!adaIsi(data.bulan)) { beri("Isi dulu jadwal bulan ini, baru buat bulan depan."); return; }
+  isiBulan(geser(data.bulan, 1), e.currentTarget);
+};
+$("tambah").onclick = () => {
+  data.nama.push({ id: Date.now(), nama: "Nama " + (data.nama.length + 1) });
+  simpan(); tampilkan();
+};
+$("simpanTombol").onclick = simpan;
+$("unduh").onclick = () => {
+  const a = el("a");
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: "application/json" }));
+  a.download = "data.json";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+$("buka").onclick = () => $("berkas").click();
+$("berkas").onchange = async e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    data = rapikan(JSON.parse(await f.text()));
+    simpan(); tampilkan(); beri("✓ File berhasil dibuka.");
+  } catch (err) {
+    beri("⚠ File tidak bisa dibaca.");
+  }
+  e.target.value = "";
+};
+$("cetak").onclick = () => window.print();
+$("kosong").onclick = e => {
+  if (!yakin(e.currentTarget)) return;
+  data.nama.forEach(o => { for (let t = 1; t <= 31; t++) delete data.jadwal[kunci(o.id, data.bulan, t)]; });
+  simpan(); tampilkan(); beri("✓ Jadwal bulan ini dikosongkan.");
+};
+$("semua").onclick = e => {
+  if (!yakin(e.currentTarget)) return;
+  data.jadwal = {};
+  simpan(); tampilkan(); beri("✓ Jadwal semua bulan dikosongkan. Nama tetap ada.");
+};
+
+$("formMasuk").onsubmit = e => {
+  e.preventDefault();
+  if ($("user").value.trim().toLowerCase() !== "saya" || $("pass").value !== "kamu") { beri("User atau pass salah."); return; }
+  $("pass").value = "";
+  edit = true;
+  const versi = terbit ? JSON.stringify(terbit) : "";
+  let draf = null;
+  try { draf = JSON.parse(localStorage.getItem(KUNCI)); draf.data = rapikan(draf.data); } catch (err) { draf = null; }
+  let pesan = "";
+  if (draf && JSON.stringify(draf.data) !== versi) {
+    data = draf.data; dasar = draf.dasar;
+    pesan = dasar === versi ? "Ada draf yang belum diunggah." : "⚠ Versi terbit berbeda dari dasar draf ini. Kalau draf sudah lama, klik Ambil Versi Terbit.";
+  } else {
+    dasar = versi;
+  }
+  aturMode(); tampilkan();
+  if (pesan) beri(pesan);
+};
+$("keluar").onclick = () => {
+  edit = false;
+  data = salin(terbit || kosong);
+  aturMode(); tampilkan();
+};
+$("buang").onclick = e => {
+  if (!yakin(e.currentTarget)) return;
+  if (!terbit) { beri("Belum ada versi terbit."); return; }
+  data = salin(terbit); dasar = JSON.stringify(terbit);
+  simpan(); tampilkan(); beri("✓ Versi terbit dimuat.");
+};
+
+async function muat() {
+  let pesan = "";
+  try {
+    const r = await fetch("data.json?t=" + Date.now(), { cache: "no-store" });
+    if (!r.ok) throw new Error("tidak ada");
+    terbit = rapikan(await r.json());
+    data = salin(terbit);
+  } catch (e) {
+    pesan = "Jadwal belum diterbitkan (data.json belum ada atau tidak bisa dibaca).";
+  }
+  aturMode(); tampilkan();
+  if (pesan) beri(pesan);
+  $("formMasuk").querySelector("button").disabled = false;
+}
+$("formMasuk").querySelector("button").disabled = true;
+aturMode();
+muat();
+</script>
+</body>
+</html>
+
